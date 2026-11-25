@@ -1,0 +1,50 @@
+name: "Holiday drift check"
+description: "Compare a hand-maintained holiday file (YAML, JSON or CSV) with bundled official calendars and report wrong observed dates, missing holidays and years not filled in yet."
+author: "Plainfold"
+branding:
+  icon: calendar
+  color: gray-dark
+inputs:
+  file:
+    description: "Path to the holiday file (.yml, .yaml, .json or .csv), relative to the workspace."
+    required: true
+  calendar:
+    description: "Calendar id: us-federal, nyse, or a world-holidays region such as GB-ENG, DE, FR (see README)."
+    required: true
+  years:
+    description: "Years to check, e.g. 2026-2027 or 2026,2028. Empty: the years present in both the file and the bundled data."
+    required: false
+    default: ""
+  fail-on:
+    description: "Comma list of checks that fail the job: missing, weekend, extra, next-year, coverage. Use none for report-only."
+    required: false
+    default: "missing,weekend"
+  ignore:
+    description: "Comma list of dates (YYYY-MM-DD) the company deliberately differs on. Left out of every check."
+    required: false
+    default: ""
+  today:
+    description: "Override today's date (YYYY-MM-DD). For tests and dry runs."
+    required: false
+    default: ""
+outputs:
+  problems:
+    description: "Number of problems found (all checks, including notices)."
+    value: ${{ steps.check.outputs.problems }}
+  summary:
+    description: "One-line summary of the result."
+    value: ${{ steps.check.outputs.summary }}
+runs:
+  using: composite
+  steps:
+    - id: check
+      shell: bash
+      env:
+        PF_FILE: ${{ inputs.file }}
+        PF_CALENDAR: ${{ inputs.calendar }}
+        PF_YEARS: ${{ inputs.years }}
+        PF_FAIL_ON: ${{ inputs.fail-on }}
+        PF_IGNORE: ${{ inputs.ignore }}
+        PF_TODAY: ${{ inputs.today }}
+        PF_ACTION_PATH: ${{ github.action_path }}
+      run: python3 "$PF_ACTION_PATH/holiday_drift.py"

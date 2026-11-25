@@ -1,0 +1,63 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - run: python3 -m unittest discover -s tests -v
+  action-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: good
+        uses: ./
+        with:
+          file: fixtures/pass.yml
+          calendar: us-federal
+          today: "2026-06-01"
+      - env:
+          PROBLEMS: ${{ steps.good.outputs.problems }}
+        run: test "$PROBLEMS" = "0"
+      - id: bad
+        uses: ./
+        continue-on-error: true
+        with:
+          file: fixtures/fail.yml
+          calendar: us-federal
+          years: "2026"
+          today: "2026-06-01"
+      - env:
+          OUTCOME: ${{ steps.bad.outcome }}
+          CONCLUSION: ${{ steps.bad.conclusion }}
+          PROBLEMS: ${{ steps.bad.outputs.problems }}
+        run: |
+          test "$OUTCOME" = "failure"
+          test "$CONCLUSION" = "success"
+          test "$PROBLEMS" -gt 0
+      - id: report-only
+        uses: ./
+        with:
+          file: fixtures/fail.yml
+          calendar: us-federal
+          years: "2026"
+          fail-on: none
+          today: "2026-06-01"
+      - env:
+          PROBLEMS: ${{ steps.report-only.outputs.problems }}
+        run: test "$PROBLEMS" -gt 0
