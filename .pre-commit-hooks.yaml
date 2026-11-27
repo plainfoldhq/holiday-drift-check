@@ -1,0 +1,8 @@
+- id: holiday-drift-check
+  name: holiday drift check
+  description: Check a hand-maintained holiday file (YAML, JSON or CSV) against verified calendars (offline).
+  entry: pre_commit_hook.py
+  language: script
+  files: ''
+  pass_filenames: true
+  require_serial: true

@@ -31,6 +31,23 @@ jobs:
 
 (Pin `uses:` to a full commit SHA in your own workflows if you can.)
 
+## Use as a pre-commit hook
+
+The same checks run locally before each commit with [pre-commit](https://pre-commit.com/) (Python 3 on PATH, no extra packages, no network):
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/plainfoldhq/holiday-drift-check
+    rev: v1   # a branch (this repo has no release tags yet); or pin a commit SHA
+    hooks:
+      - id: holiday-drift-check
+        args: [--calendar, us-federal]   # optional: --years 2026-2027 --fail-on missing,weekend --ignore 2026-12-24
+        files: ^config/holidays\.ya?ml$  # your holiday file
+```
+
+Exit codes are the same as the Action (0 ok, 1 a failing check found problems, 2 bad input). Outside GitHub Actions the findings print as `file:line: level: check: message`. Checked end to end with pre-commit 4.3.0.
+
 ## What it checks
 
 | Check | Finds | Default |
